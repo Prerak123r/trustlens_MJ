@@ -12,6 +12,37 @@ router = APIRouter(
     tags=["Claims"]
 )
 
+@router.get("/")
+def get_all_claims(db: Session = Depends(get_db)):
+    claims = (
+        db.query(Claim)
+        .order_by(Claim.id.desc())
+        .all()
+    )
+
+    return {
+        "claims": [
+            {
+                "id": claim.id,
+                "claim_number": claim.claim_number,
+                "status": claim.status,
+                "created_at": claim.created_at,
+                "evidence_count": len(claim.evidence),
+                "verification_runs": [
+                    {
+                        "id": run.id,
+                        "status": run.status,
+                        "pipeline_version": run.pipeline_version,
+                        "started_at": run.started_at,
+                        "completed_at": run.completed_at,
+                        "analysis_count": len(run.analysis_results),
+                    }
+                    for run in claim.verification_runs
+                ],
+            }
+            for claim in claims
+        ]
+    }
 
 @router.post("/")
 def create_claim(

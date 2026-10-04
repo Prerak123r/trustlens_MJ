@@ -1,13 +1,10 @@
 import { useState } from "react";
 
 import { createClaim } from "../services/api";
-
 import { uploadEvidence } from "../services/uploadService";
-
 import { startVerification } from "../services/verificationService";
 
 import ClaimDashboard from "./ClaimDashboard";
-
 import VerificationProgress from "./VerificationProgress";
 
 
@@ -60,6 +57,11 @@ function NewClaim() {
 
             setClaim(data);
 
+            localStorage.setItem(
+                "trustlens_last_claim_id",
+                String(data.id)
+            );
+
             setMessage(
                 `Claim created successfully: ${data.claim_number}`
             );
@@ -69,7 +71,6 @@ function NewClaim() {
             console.error(error);
 
             setError(error.message);
-
         }
     }
 
@@ -129,6 +130,7 @@ function NewClaim() {
 
             setError(error.message);
 
+
         } finally {
 
             setUploading(false);
@@ -174,7 +176,6 @@ function NewClaim() {
 
             setShowVerification(true);
 
-
             setShowDashboard(false);
 
 
@@ -183,7 +184,6 @@ function NewClaim() {
             console.error(error);
 
             setError(error.message);
-
         }
     }
 
@@ -198,11 +198,9 @@ function NewClaim() {
     ) {
 
         return (
-
             <VerificationProgress
                 runId={verificationRunId}
             />
-
         );
     }
 
@@ -217,296 +215,359 @@ function NewClaim() {
     ) {
 
         return (
-
             <ClaimDashboard
                 claimId={claim.id}
-
                 onStartVerification={
                     handleStartVerification
                 }
             />
-
         );
     }
 
 
     // --------------------------------
-    // MAIN NEW CLAIM PAGE
+    // MAIN CLAIM PAGE
     // --------------------------------
 
     return (
 
-        <div>
+        <div className="page-container">
 
-            <h1>TrustLens</h1>
+            {/* HERO */}
 
-            <p>
-                Multimodal Claim Evidence Verification
-            </p>
+            <section className="hero-card clay-card">
 
-            <hr />
+                <div className="hero-copy">
 
-
-            <h2>Create New Claim</h2>
-
-
-            {!claim && (
-
-                <button
-                    onClick={handleCreateClaim}
-                >
-                    Create Claim
-                </button>
-
-            )}
+                    <span className="eyebrow">
+                        INSURANCE CLAIM PORTAL
+                    </span>
 
 
-            {claim && (
-
-                <div>
-
-                    <h3>
-                        Claim Created
-                    </h3>
+                    <h1>
+                        Submit your claim.
+                        <br />
+                        Let the evidence speak.
+                    </h1>
 
 
                     <p>
-
-                        <strong>
-                            Claim Number:
-                        </strong>{" "}
-
-                        {claim.claim_number}
-
+                        TrustLens analyzes claim evidence
+                        across documents, images and
+                        verification signals to support
+                        insurance review.
                     </p>
 
 
-                    <p>
+                    {!claim && (
 
-                        <strong>
-                            Status:
-                        </strong>{" "}
+                        <button
+                            className="primary-btn"
+                            onClick={handleCreateClaim}
+                        >
+                            <span>＋</span>
 
-                        {claim.status}
+                            Create New Claim
+                        </button>
 
-                    </p>
+                    )}
 
                 </div>
 
-            )}
+
+                <div className="hero-orb">
+
+                    <div className="orb-inner">
+                        <span>TL</span>
+                    </div>
+
+                </div>
+
+            </section>
 
 
-            <hr />
-
+            {/* CLAIM INFORMATION */}
 
             {claim && (
 
-                <div>
-
-                    <h2>
-                        Upload Evidence
-                    </h2>
-
-
-                    {/* ========================= */}
-                    {/* INVOICE */}
-                    {/* ========================= */}
+                <section className="claim-strip clay-card">
 
                     <div>
 
-                        <h3>
-                            1. Invoice
-                        </h3>
+                        <span className="muted-label">
+                            CLAIM NUMBER
+                        </span>
+
+                        <strong>
+                            {claim.claim_number}
+                        </strong>
+
+                    </div>
 
 
-                        <input
-                            type="file"
+                    <div>
 
-                            accept=".jpg,.jpeg,.png,.webp,.pdf"
+                        <span className="muted-label">
+                            STATUS
+                        </span>
 
-                            onChange={(event) =>
-                                setInvoiceFile(
-                                    event.target.files[0]
-                                )
-                            }
-                        />
+                        <span className="status-pill pending">
+                            {claim.status}
+                        </span>
+
+                    </div>
+
+                </section>
+
+            )}
 
 
-                        <button
+            {/* EVIDENCE */}
 
-                            onClick={() =>
+            {claim && (
+
+                <>
+
+                    <section className="section-heading">
+
+                        <div>
+
+                            <span className="eyebrow">
+                                STEP 01 — EVIDENCE
+                            </span>
+
+                            <h2>
+                                Upload claim evidence
+                            </h2>
+
+                            <p>
+                                Add the documents and images
+                                that support your insurance
+                                claim.
+                            </p>
+
+                        </div>
+
+                    </section>
+
+
+                    <div className="evidence-grid">
+
+                        <UploadCard
+                            number="01"
+                            title="Invoice"
+                            description="Upload your purchase invoice or bill."
+                            file={invoiceFile}
+                            setFile={setInvoiceFile}
+                            onUpload={() =>
                                 handleUpload(
                                     "invoice",
                                     invoiceFile
                                 )
                             }
-
-                            disabled={uploading}
-
-                        >
-                            Upload Invoice
-                        </button>
-
-                    </div>
-
-
-                    <br />
-
-
-                    {/* ========================= */}
-                    {/* PRODUCT */}
-                    {/* ========================= */}
-
-                    <div>
-
-                        <h3>
-                            2. Product Image
-                        </h3>
-
-
-                        <input
-                            type="file"
-
-                            accept=".jpg,.jpeg,.png,.webp"
-
-                            onChange={(event) =>
-                                setProductFile(
-                                    event.target.files[0]
-                                )
-                            }
+                            uploading={uploading}
+                            icon="▤"
+                            accept=".jpg,.jpeg,.png,.webp,.pdf"
                         />
 
 
-                        <button
-
-                            onClick={() =>
+                        <UploadCard
+                            number="02"
+                            title="Product"
+                            description="Add a clear image of the product."
+                            file={productFile}
+                            setFile={setProductFile}
+                            onUpload={() =>
                                 handleUpload(
                                     "product",
                                     productFile
                                 )
                             }
-
-                            disabled={uploading}
-
-                        >
-                            Upload Product Image
-                        </button>
-
-                    </div>
-
-
-                    <br />
-
-
-                    {/* ========================= */}
-                    {/* DAMAGE */}
-                    {/* ========================= */}
-
-                    <div>
-
-                        <h3>
-                            3. Damage Image
-                        </h3>
-
-
-                        <input
-                            type="file"
-
+                            uploading={uploading}
+                            icon="◇"
                             accept=".jpg,.jpeg,.png,.webp"
-
-                            onChange={(event) =>
-                                setDamageFile(
-                                    event.target.files[0]
-                                )
-                            }
                         />
 
 
-                        <button
-
-                            onClick={() =>
+                        <UploadCard
+                            number="03"
+                            title="Damage"
+                            description="Show the damaged area clearly."
+                            file={damageFile}
+                            setFile={setDamageFile}
+                            onUpload={() =>
                                 handleUpload(
                                     "damage",
                                     damageFile
                                 )
                             }
-
-                            disabled={uploading}
-
-                        >
-                            Upload Damage Image
-                        </button>
+                            uploading={uploading}
+                            icon="◈"
+                            accept=".jpg,.jpeg,.png,.webp"
+                        />
 
                     </div>
 
 
-                    <br />
+                    {/* NEXT STEP */}
+
+                    <section className="action-panel clay-card">
+
+                        <div>
+
+                            <span className="eyebrow">
+                                READY FOR REVIEW?
+                            </span>
+
+                            <h3>
+                                View your claim before verification
+                            </h3>
+
+                            <p>
+                                Make sure all available evidence
+                                has been uploaded before starting
+                                the verification pipeline.
+                            </p>
+
+                        </div>
 
 
-                    {uploading && (
+                        <button
+                            className="secondary-btn"
+                            onClick={() =>
+                                setShowDashboard(true)
+                            }
+                        >
+                            View Claim Dashboard →
+                        </button>
 
-                        <p>
-                            Uploading...
-                        </p>
+                    </section>
 
-                    )}
-
-
-                    <hr />
-
-
-                    {/* ========================= */}
-                    {/* DASHBOARD BUTTON */}
-                    {/* ========================= */}
-
-                    <button
-
-                        onClick={() =>
-                            setShowDashboard(true)
-                        }
-
-                    >
-                        View Claim Dashboard
-
-                    </button>
-
-                </div>
+                </>
 
             )}
 
 
-            {/* ========================= */}
-            {/* SUCCESS MESSAGE */}
-            {/* ========================= */}
+            {/* MESSAGES */}
+
+            {uploading && (
+
+                <div className="toast info">
+                    Uploading evidence...
+                </div>
+
+            )}
+
 
             {message && (
 
-                <div>
-
-                    <p>
-                        {message}
-                    </p>
-
+                <div className="toast success">
+                    ✓ {message}
                 </div>
 
             )}
 
-
-            {/* ========================= */}
-            {/* ERROR MESSAGE */}
-            {/* ========================= */}
 
             {error && (
 
-                <div>
-
-                    <p>
-                        Error: {error}
-                    </p>
-
+                <div className="toast error">
+                    ! {error}
                 </div>
 
             )}
+
+        </div>
+    );
+}
+
+
+// ========================================
+// UPLOAD CARD
+// ========================================
+
+function UploadCard({
+    number,
+    title,
+    description,
+    file,
+    setFile,
+    onUpload,
+    uploading,
+    icon,
+    accept
+}) {
+
+    return (
+
+        <div className="upload-card clay-card">
+
+            <div className="upload-card-top">
+
+                <span className="step-number">
+                    {number}
+                </span>
+
+                <span className="upload-icon">
+                    {icon}
+                </span>
+
+            </div>
+
+
+            <h3>
+                {title}
+            </h3>
+
+
+            <p>
+                {description}
+            </p>
+
+
+            <label className="file-drop">
+
+                <input
+                    type="file"
+                    accept={accept}
+                    onChange={(event) =>
+                        setFile(
+                            event.target.files[0]
+                        )
+                    }
+                />
+
+
+                <span className="upload-arrow">
+                    ↑
+                </span>
+
+
+                <strong>
+                    {file
+                        ? file.name
+                        : "Choose a file"}
+                </strong>
+
+
+                <small>
+                    {file
+                        ? "Ready to upload"
+                        : "JPG, PNG or PDF"}
+                </small>
+
+            </label>
+
+
+            <button
+                className="small-btn"
+                onClick={onUpload}
+                disabled={
+                    uploading ||
+                    !file
+                }
+            >
+                Upload {title}
+            </button>
 
         </div>
     );

@@ -1,42 +1,131 @@
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL =
+    "http://127.0.0.1:8000";
 
 
-export async function startVerification(claimId) {
+// ============================================================
+// START VERIFICATION
+// ============================================================
 
-    const response = await fetch(
-        `${API_BASE_URL}/claims/${claimId}/verify`,
-        {
-            method: "POST"
-        }
-    );
+export async function startVerification(
+    claimId
+) {
+
+    const response =
+        await fetch(
+            `${API_BASE_URL}/claims/${claimId}/verify`,
+            {
+                method: "POST"
+            }
+        );
+
 
     if (!response.ok) {
 
-        const error = await response.json();
+        let message =
+            "Failed to start verification.";
+
+        try {
+
+            const errorData =
+                await response.json();
+
+            message =
+                errorData.detail ||
+                message;
+
+        } catch {
+            // Keep default message.
+        }
 
         throw new Error(
-            error.detail || "Failed to start verification"
+            message
         );
     }
+
 
     return await response.json();
 }
 
 
-export async function getVerificationRun(runId) {
+// ============================================================
+// GET SINGLE VERIFICATION RUN
+// ============================================================
 
-    const response = await fetch(
-        `${API_BASE_URL}/claims/verification/${runId}`
-    );
+export async function getVerificationRun(
+    runId
+) {
+
+    const response =
+        await fetch(
+            `${API_BASE_URL}/claims/verification/${runId}`
+        );
+
 
     if (!response.ok) {
 
-        const error = await response.json();
+        let message =
+            "Failed to load verification run.";
+
+        try {
+
+            const errorData =
+                await response.json();
+
+            message =
+                errorData.detail ||
+                message;
+
+        } catch {
+            // Keep default message.
+        }
 
         throw new Error(
-            error.detail || "Failed to fetch verification"
+            message
         );
     }
+
+
+    return await response.json();
+}
+
+
+// ============================================================
+// GET ALL VERIFICATION RUNS FOR A CLAIM
+// ============================================================
+
+export async function getClaimVerificationRuns(
+    claimId
+) {
+
+    const response =
+        await fetch(
+            `${API_BASE_URL}/claims/${claimId}/verification-runs`
+        );
+
+
+    if (!response.ok) {
+
+        let message =
+            "Failed to load verification runs.";
+
+        try {
+
+            const errorData =
+                await response.json();
+
+            message =
+                errorData.detail ||
+                message;
+
+        } catch {
+            // Keep default message.
+        }
+
+        throw new Error(
+            message
+        );
+    }
+
 
     return await response.json();
 }

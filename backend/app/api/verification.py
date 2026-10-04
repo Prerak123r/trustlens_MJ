@@ -2,8 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.db.models import Claim,VerificationRun
-from app.services.verification_pipeline import create_verification_run
+from app.db.models import (
+    Claim,
+    VerificationRun
+)
+from app.services.verification_pipeline import (
+    create_verification_run
+)
 
 
 router = APIRouter(
@@ -11,6 +16,10 @@ router = APIRouter(
     tags=["Verification"]
 )
 
+
+# ============================================================
+# START VERIFICATION
+# ============================================================
 
 @router.post("/{claim_id}/verify")
 def start_verification(
@@ -53,6 +62,63 @@ def start_verification(
         "status": run.status
     }
 
+
+# ============================================================
+# GET ALL VERIFICATION RUNS FOR A CLAIM
+# ============================================================
+
+@router.get("/{claim_id}/verification-runs")
+def get_claim_verification_runs(
+    claim_id: int,
+    db: Session = Depends(get_db)
+):
+
+    claim = (
+        db.query(Claim)
+        .filter(Claim.id == claim_id)
+        .first()
+    )
+
+    if not claim:
+        raise HTTPException(
+            status_code=404,
+            detail="Claim not found."
+        )
+
+    runs = (
+        db.query(VerificationRun)
+        .filter(
+            VerificationRun.claim_id == claim_id
+        )
+        .order_by(
+            VerificationRun.id.desc()
+        )
+        .all()
+    )
+
+    return {
+        "claim_id": claim.id,
+        "claim_number": claim.claim_number,
+        "verification_runs": [
+            {
+                "id": run.id,
+                "claim_id": run.claim_id,
+                "status": run.status,
+                "pipeline_version": run.pipeline_version,
+                "started_at": run.started_at,
+                "completed_at": run.completed_at,
+                "analysis_count": len(
+                    run.analysis_results
+                )
+            }
+            for run in runs
+        ]
+    }
+
+
+# ============================================================
+# GET SINGLE VERIFICATION RUN
+# ============================================================
 
 @router.get("/verification/{run_id}")
 def get_verification_run(

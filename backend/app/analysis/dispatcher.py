@@ -1,47 +1,30 @@
-from app.analysis.image_quality import (
-    analyze_image_quality
-)
-
-from app.analysis.forensics import (
-    analyze_forensics
-)
-
-from app.analysis.ai_generation import (
-    analyze_ai_generation
-)
-
-from app.analysis.metadata import (
-    analyze_metadata
-)
-
-from app.analysis.ocr import (
-    analyze_ocr
-)
+from app.analysis.image_quality import analyze_image_quality
+from app.analysis.quality_gate import evaluate_quality_gate
+from app.analysis.forensics import analyze_forensics
+from app.analysis.tampering import analyze_tampering
+from app.analysis.ai_generation import analyze_ai_generation
+from app.analysis.metadata import analyze_metadata
+from app.analysis.ocr import analyze_ocr
+from app.analysis.ocr_entities import extract_ocr_entities
 
 
 ANALYZERS = {
-
-    "IMAGE_QUALITY":
-        analyze_image_quality,
-
-    "FORENSICS":
-        analyze_forensics,
-
-    "AI_GENERATION":
-        analyze_ai_generation,
-
-    "METADATA":
-        analyze_metadata,
-
-    "OCR":
-        analyze_ocr,
-
+    "IMAGE_QUALITY": analyze_image_quality,
+    "QUALITY_GATE": evaluate_quality_gate,
+    "FORENSICS": analyze_forensics,
+    "TAMPERING_DETECTION": analyze_tampering,
+    "AI_GENERATION": analyze_ai_generation,
+    "METADATA": analyze_metadata,
+    "OCR": analyze_ocr,
+    "OCR_ENTITIES": extract_ocr_entities,
 }
 
 
 def run_analysis(
     analysis_type,
-    evidence
+    evidence,
+    image_quality_result=None,
+    ocr_result=None
 ):
 
     analyzer = ANALYZERS.get(
@@ -56,9 +39,23 @@ def run_analysis(
             "evidence_id": evidence.id,
             "result": None,
             "message": (
-                f"No analyzer registered "
-                f"for {analysis_type}"
+                f"No analyzer registered for "
+                f"{analysis_type}"
             )
         }
+
+    if analysis_type == "QUALITY_GATE":
+
+        return analyzer(
+            image_quality_result=image_quality_result,
+            evidence_id=evidence.id
+        )
+
+    if analysis_type == "OCR_ENTITIES":
+
+        return analyzer(
+            evidence=evidence,
+            ocr_result=ocr_result
+        )
 
     return analyzer(evidence)
